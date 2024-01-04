@@ -16,6 +16,8 @@ for i in range(len(questionnaire["questions"])):
     print(questionnaire["questions"][i])
 print(questionnaire["questions"][0]["titre"])
 """
+
+"""
 nb_questions = len(questionnaire["questions"])
 total = 0
 for i in range(nb_questions):
@@ -32,3 +34,4 @@ for i in range(nb_questions):
         total += 1
     print()
 print("Bonne reponse : ",total)
+"""

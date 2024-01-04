@@ -1,23 +1,5 @@
-# PROJET QUESTIONNAIRE V3 : POO
-#
-# - Pratiquer sur la POO
-# - Travailler sur du code existant
-# - Mener un raisonnement
-#
-# -> Définir les entitées (données, actions)
-#
-# Question
-#    - titre       - str
-#    - choix       - (str)
-#    - bonne_reponse   - str
-#
-#    - poser()  -> bool
-#
-# Questionnaire
-#    - questions      - (Question)
-#
-#    - lancer()
-#
+import json
+import sys
 
 class Question:
     def __init__(self, titre, choix, bonne_reponse):
@@ -25,13 +7,16 @@ class Question:
         self.choix = choix
         self.bonne_reponse = bonne_reponse
 
-    def FromData(data):
-        # ....
-        q = Question(data[2], data[0], data[1])
+    def from_json_data(data):
+        choix = [i[0] for i in data["choix"]]
+        bonne_reponse = [i[0] for i in data["choix"] if i[1]]
+        if len(bonne_reponse) != 1:
+            return None
+        q = Question(data["titre"], choix, bonne_reponse[0])
         return q
 
-    def poser(self):
-        print("QUESTION")
+    def poser(self, numero_question, nb_questions):
+        print(f"QUESTION {numero_question} / {nb_questions}")
         print("  " + self.titre)
         for i in range(len(self.choix)):
             print("  ", i+1, "-", self.choix[i])
@@ -61,39 +46,53 @@ class Question:
         return Question.demander_reponse_numerique_utlisateur(min, max)
     
 class Questionnaire:
-    def __init__(self, questions):
+    def __init__(self, questions, categorie, titre, difficulte):
         self.questions = questions
+        self.categorie = categorie
+        self.titre = titre
+        self.difficulte = difficulte
+        
+    def from_json_data(data):
+        questions = [Question.from_json_data(i) for i in data["questions"]]
+        return Questionnaire(questions, data["categorie"], data["titre"], data["difficulte"])
+    
+    def from_json_file(filename):
+        try:
+            f = open(filename,"r")
+            data_json = f.read()
+            f.close()
+            data = json.loads(data_json)
+        except:
+            print("Erreur de lecture du fichier : ",filename)
+            return None
+        return Questionnaire.from_json_data(data)
 
     def lancer(self):
         score = 0
-        for question in self.questions:
-            if question.poser():
+        nb_questions = len(self.questions)
+
+        print()
+        print("Questionnaire : ",self.titre)
+        print(" - Catégorie  : ",self.categorie)
+        print(" - Difficulté : ",self.difficulte)
+        print(" - Nombre de questions : ",nb_questions)
+        print()
+        
+        for i in range(nb_questions):
+            question = self.questions[i]
+            if question.poser(i+1,nb_questions):
                 score += 1
-        print("Score final :", score, "sur", len(self.questions))
+        print("Score final :", score, "sur", nb_questions)
         return score
 
 
-"""questionnaire = (
-    ("Quelle est la capitale de la France ?", ("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris"), 
-    ("Quelle est la capitale de l'Italie ?", ("Rome", "Venise", "Pise", "Florence"), "Rome"),
-    ("Quelle est la capitale de la Belgique ?", ("Anvers", "Bruxelles", "Bruges", "Liège"), "Bruxelles")
-                )
+#Questionnaire.from_json_file("animaux_leschats_confirme.json").lancer()
+#print(sys.argv)
 
-lancer_questionnaire(questionnaire)"""
-
-# q1 = Question("Quelle est la capitale de la France ?", ("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris")
-# q1.poser()
-
-# data = (("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris", "Quelle est la capitale de la France ?")
-# q = Question.FromData(data)
-# print(q.__dict__)
-
-Questionnaire(
-    (
-    Question("Quelle est la capitale de la France ?", ("Marseille", "Nice", "Paris", "Nantes", "Lille"), "Paris"), 
-    Question("Quelle est la capitale de l'Italie ?", ("Rome", "Venise", "Pise", "Florence"), "Rome"),
-    Question("Quelle est la capitale de la Belgique ?", ("Anvers", "Bruxelles", "Bruges", "Liège"), "Bruxelles")
-    )
-).lancer()
-
-
+if len(sys.argv) < 2:
+    print("ERREUR : Fichier json à charger")
+    exit(0)
+json_filename = sys.argv[1]
+questionnaire = Questionnaire.from_json_file(json_filename)
+if questionnaire:
+    questionnaire.lancer()
