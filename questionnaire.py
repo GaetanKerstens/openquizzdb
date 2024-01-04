@@ -8,8 +8,11 @@ class Question:
         self.bonne_reponse = bonne_reponse
 
     def from_json_data(data):
+        # Transforme les données choix tuple(titre, bool "bonne réponse") --> [choix1, choix2,...]
         choix = [i[0] for i in data["choix"]]
+        # Trouve le bon choix en fonction du bool "bonne réponse"
         bonne_reponse = [i[0] for i in data["choix"] if i[1]]
+        # Si aucune bonne réponse ou plusieurs bonnes réponses --> Anomalie dans les données
         if len(bonne_reponse) != 1:
             return None
         q = Question(data["titre"], choix, bonne_reponse[0])
@@ -53,7 +56,12 @@ class Questionnaire:
         self.difficulte = difficulte
         
     def from_json_data(data):
+        # Ajout des questions si différent de None
+        #questions = [Question.from_json_data(i) for i in data["questions"] if Question.from_json_data(i)]
         questions = [Question.from_json_data(i) for i in data["questions"]]
+        # Supprime les questions None (qui n'ont pas pu être crées)
+        questions = [i for i in questions if i]
+
         return Questionnaire(questions, data["categorie"], data["titre"], data["difficulte"])
     
     def from_json_file(filename):
@@ -63,7 +71,7 @@ class Questionnaire:
             f.close()
             data = json.loads(data_json)
         except:
-            print("Erreur de lecture du fichier : ",filename)
+            print("Erreur d'ouverture ou de lecture du fichier : ",filename)
             return None
         return Questionnaire.from_json_data(data)
 
